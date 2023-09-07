@@ -1,0 +1,78 @@
+generator client {
+  provider = "prisma-client-js"
+  previewFeatures = ["clientExtensions", "postgresqlExtensions"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  extensions      = [pgcrypto]
+}
+
+model blood_bank {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  blood_type  String   @db.VarChar(255)
+  quantity    Int
+  hospital_id String   @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  hospital    hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model blood_request {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  requester_name String   @db.VarChar(255)
+  blood_type     String   @db.VarChar(255)
+  quantity       Int
+  status         String   @db.VarChar(255)
+  user_id        String   @db.Uuid
+  hospital_id    String   @db.Uuid
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  updated_at     DateTime @default(now()) @db.Timestamp(6)
+  hospital       hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user           user     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model hospital {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  description   String?         @db.VarChar(255)
+  address       String?         @db.VarChar(255)
+  city          String?         @db.VarChar(255)
+  state         String?         @db.VarChar(255)
+  zip_code      String?         @db.VarChar(255)
+  name          String          @db.VarChar(255)
+  created_at    DateTime        @default(now()) @db.Timestamp(6)
+  updated_at    DateTime        @default(now()) @db.Timestamp(6)
+  user_id       String          @db.Uuid
+  tenant_id     String          @db.VarChar(255)
+  blood_bank    blood_bank[]
+  blood_request blood_request[]
+  user          user            @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  staff_member  staff_member[]
+}
+
+model staff_member {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  job_title   String   @db.VarChar(255)
+  department  String   @db.VarChar(255)
+  user_id     String   @db.Uuid
+  hospital_id String   @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamp(6)
+  updated_at  DateTime @default(now()) @db.Timestamp(6)
+  hospital    hospital @relation(fields: [hospital_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  user        user     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model user {
+  id            String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email         String          @unique @db.VarChar(255)
+  firstName     String?         @db.VarChar(255)
+  lastName      String?         @db.VarChar(255)
+  roq_user_id   String          @db.VarChar(255)
+  tenant_id     String          @db.VarChar(255)
+  created_at    DateTime        @default(now()) @db.Timestamp(6)
+  updated_at    DateTime        @default(now()) @db.Timestamp(6)
+  blood_request blood_request[]
+  hospital      hospital[]
+  staff_member  staff_member[]
+}
